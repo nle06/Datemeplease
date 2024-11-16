@@ -554,22 +554,6 @@
             responseList.innerHTML = responseHtml;
         }
 
-        function resetCooldown() {
-            if (confirm('Are you sure you want to reset the cooldown? This will allow immediate new responses.')) {
-                localStorage.removeItem('lastResponse');
-                localStorage.removeItem('lastResponseTime');
-
-                // Re-enable buttons and clear cooldown message
-                document.getElementById('yesButton').disabled = false;
-                document.getElementById('noButton').disabled = false;
-                document.getElementById('cooldownMessage').textContent = '';
-
-                alert('Cooldown has been reset! You can now respond again.');
-
-                // Update the admin panel
-                updateResponseList();
-            }
-        }
 
 
         // Check cooldown status when page loads
