@@ -52,7 +52,13 @@
             pointer-events: none;
             opacity: 0.7;
         }
-
+        .heart {
+    position: fixed;
+    animation: heartFloat 4s ease-in-out forwards;
+    z-index: 1000;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+}
         .pattern {
             position: absolute;
             border-radius: 50%;
@@ -83,7 +89,24 @@
             left: 25%;
             animation: floatPattern 18s infinite ease-in-out 1s;
         }
-
+        @keyframes heartFloat {
+    0% {
+        transform: translate(0, 0) scale(0);
+        opacity: 0;
+    }
+    25% {
+        transform: translate(calc(var(--random-x, -50) * 1px),
+                           calc(var(--random-y, -50) * 1px))
+                  scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(calc(var(--random-x, -50) * 2px),
+                           calc(var(--random-y, -100) * 2px))
+                  scale(0);
+        opacity: 0;
+    }
+}
         .container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
@@ -445,122 +468,212 @@
         </div>
     </div>
     <script>
-        const COOLDOWN_DURATION = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+const BIN_ID = '67381cd4ad19ca34f8cae6be'; // You'll get this from JSONBin
+const API_KEY = '$2a$10$X8sRIS34BNX.c9v/WcjCkOvlae7rYy14wAJ2CxWhDXpu.jbqdVhdq'; // You'll get this from JSONBin
+const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const COOLDOWN_DURATION = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 
-        function checkCooldown() {
-            const lastResponse = localStorage.getItem('lastResponse');
-            const lastResponseTime = localStorage.getItem('lastResponseTime');
+async function saveResponseToServer(response) {
+    try {
+        const existingData = await getResponsesFromServer();
+        let responses = existingData.responses || [];
 
-            if (lastResponseTime) {
-                const timeElapsed = Date.now() - parseInt(lastResponseTime);
-                if (timeElapsed < COOLDOWN_DURATION) {
-                    const hoursLeft = Math.ceil((COOLDOWN_DURATION - timeElapsed) / (1000 * 60 * 60));
-                    document.getElementById('yesButton').disabled = true;
-                    document.getElementById('noButton').disabled = true;
-                    document.getElementById('cooldownMessage').textContent =
-                        `${hoursLeft} tiếng nữa quay lại nhó chụt chụt`;
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        function handleResponse(response) {
-            if (checkCooldown()) return;
-
-            // Store the response with timestamp
-            const timestamp = Date.now();
-            const responses = JSON.parse(localStorage.getItem('responses') || '[]');
+        // If response is an array, it's a reset
+        if (Array.isArray(response)) {
+            responses = [];
+        } else {
             responses.push({
                 response: response,
-                timestamp: timestamp
+                timestamp: Date.now()
             });
-            localStorage.setItem('responses', JSON.stringify(responses));
+        }
 
-            // Store last response for cooldown
-            localStorage.setItem('lastResponse', response);
-            localStorage.setItem('lastResponseTime', timestamp.toString());
+        const res = await fetch(API_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': API_KEY
+            },
+            body: JSON.stringify({ responses })
+        });
 
-            // Handle different responses
-            if (response === 'yes') {
-                // Create hearts animation
-                for (let i = 0; i < 15; i++) {
-                    setTimeout(() => createHeart(), i * 100);
-                }
-                alert("Yayyyy! ❤️");
-                // Redirect to success.html after a short delay
-                setTimeout(() => {
-                    window.location.href = "success.html";
-                }, 500);
-            } else {
-                alert("Phú Phú đã bùn 💔");
+        return await res.json();
+    } catch (error) {
+        console.error('Error saving response:', error);
+    }
+}
+
+async function getResponsesFromServer() {
+    try {
+        const res = await fetch(API_URL, {
+            headers: {
+                'X-Master-Key': API_KEY
             }
+        });
+        const data = await res.json();
+        return data.record || { responses: [] };
+    } catch (error) {
+        console.error('Error getting responses:', error);
+        return { responses: [] };
+    }
+}
 
-            // Disable buttons and show cooldown message
+function checkCooldown() {
+    const lastResponse = localStorage.getItem('lastResponse');
+    const lastResponseTime = localStorage.getItem('lastResponseTime');
+
+    if (lastResponseTime) {
+        const timeElapsed = Date.now() - parseInt(lastResponseTime);
+        if (timeElapsed < COOLDOWN_DURATION) {
+            const hoursLeft = Math.ceil((COOLDOWN_DURATION - timeElapsed) / (1000 * 60 * 60));
             document.getElementById('yesButton').disabled = true;
             document.getElementById('noButton').disabled = true;
             document.getElementById('cooldownMessage').textContent =
-            `Bùn rùi nên ${hoursLeft} tiếng nữa mới đc trả lời`;
+                `${hoursLeft} tiếng nữa quay lại nhó chụt chụt`;
+            return true;
         }
+    }
+    return false;
+}
 
-        function createHeart() {
-            const heart = document.createElement('div');
-            heart.classList.add('heart');
-            heart.innerHTML = '❤️';
-            heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
-            document.querySelector('.hearts').appendChild(heart);
+async function handleResponse(response) {
+    if (checkCooldown()) return;
 
-            setTimeout(() => {
-                heart.remove();
-            }, 5000);
+    // Store response both locally and on server
+    const timestamp = Date.now();
+
+    // Save locally
+    const responses = JSON.parse(localStorage.getItem('responses') || '[]');
+    responses.push({
+        response: response,
+        timestamp: timestamp
+    });
+    localStorage.setItem('responses', JSON.stringify(responses));
+
+    // Save to server
+    await saveResponseToServer(response);
+
+    // Store last response for cooldown
+    localStorage.setItem('lastResponse', response);
+    localStorage.setItem('lastResponseTime', timestamp.toString());
+
+    // Handle different responses
+    if (response === 'yes') {
+        for (let i = 0; i < 15; i++) {
+            setTimeout(() => createHeart(), i * 100);
         }
+        alert("Yayyyy! ❤️");
+        setTimeout(() => {
+            window.location.href = "success.html";
+        }, 500);
+    } else {
+        alert("Phú Phú đã bùn 💔");
+    }
 
-        function toggleAdminPanel() {
-            const adminPanel = document.getElementById('adminPanel');
-            const overlay = document.getElementById('overlay');
-            const isVisible = adminPanel.style.display === 'block';
+    // Calculate hours left
+    const hoursLeft = Math.ceil(COOLDOWN_DURATION / (1000 * 60 * 60));
 
-            if (!isVisible) {
-                updateResponseList();
-            }
+    // Update UI
+    document.getElementById('yesButton').disabled = true;
+    document.getElementById('noButton').disabled = true;
+    document.getElementById('cooldownMessage').textContent =
+        `Bùn rùi nên ${hoursLeft} tiếng nữa mới đc trả lời`;
+}
 
-            adminPanel.style.display = isVisible ? 'none' : 'block';
-            overlay.style.display = isVisible ? 'none' : 'block';
-        }
+function createHeart() {
+    const heart = document.createElement('div');
+    heart.classList.add('heart');
+    heart.innerHTML = '❤️';
+    heart.style.left = Math.random() * 100 + 'vw';
+    heart.style.setProperty('--random-x', Math.random() * 100 - 50);
+    heart.style.setProperty('--random-y', -(Math.random() * 50 + 50));
+    document.querySelector('.hearts').appendChild(heart);
 
-        function updateResponseList() {
-            const responses = JSON.parse(localStorage.getItem('responses') || '[]');
-            const responseList = document.getElementById('responseList');
+    setTimeout(() => {
+        heart.remove();
+    }, 4000);
+}
 
-            if (responses.length === 0) {
-                responseList.innerHTML = '<p>No responses yet.</p>';
-                return;
-            }
+function toggleAdminPanel() {
+    const adminPanel = document.getElementById('adminPanel');
+    const overlay = document.getElementById('overlay');
+    const isVisible = adminPanel.style.display === 'block';
 
-            const responseHtml = responses.map(item => {
-                const date = new Date(item.timestamp);
-                const formattedDate = date.toLocaleString();
-                const responseClass = item.response === 'yes' ? 'response-yes' : 'response-no';
+    if (!isVisible) {
+        updateResponseList();
+    }
 
-                return `
-                    <div class="response-item">
-                        <span class="${responseClass}">${item.response.toUpperCase()}</span>
-                        <span>${formattedDate}</span>
-                    </div>
-                `;
-            }).join('');
+    adminPanel.style.display = isVisible ? 'none' : 'block';
+    overlay.style.display = isVisible ? 'none' : 'block';
+}
 
-            responseList.innerHTML = responseHtml;
-        }
+async function updateResponseList() {
+    // Get responses from server
+    const serverData = await getResponsesFromServer();
+    const responses = serverData.responses || [];
 
+    const responseList = document.getElementById('responseList');
 
+    if (responses.length === 0) {
+        responseList.innerHTML = '<p>No responses yet.</p>';
+        return;
+    }
 
-        // Check cooldown status when page loads
-        window.addEventListener('load', () => {
-            checkCooldown();
-            updateResponseList();
-        });
-    </script>
+    const responseHtml = responses.map(item => {
+        const date = new Date(item.timestamp);
+        const formattedDate = date.toLocaleString();
+        const responseClass = item.response === 'yes' ? 'response-yes' : 'response-no';
+
+        return `
+            <div class="response-item">
+                <span class="${responseClass}">${item.response.toUpperCase()}</span>
+                <span>${formattedDate}</span>
+            </div>
+        `;
+    }).join('');
+
+    responseList.innerHTML = responseHtml;
+}
+
+async function resetCooldown() {
+    if (confirm('Are you sure you want to reset the cooldown? This will allow immediate new responses.')) {
+        localStorage.removeItem('lastResponse');
+        localStorage.removeItem('lastResponseTime');
+
+        document.getElementById('yesButton').disabled = false;
+        document.getElementById('noButton').disabled = false;
+        document.getElementById('cooldownMessage').textContent = '';
+
+        alert('Cooldown has been reset! You can now respond again.');
+        await updateResponseList();
+    }
+}
+
+async function resetAllData() {
+    if (confirm('Are you sure you want to reset ALL data? This will delete all response history.')) {
+        // Clear local storage
+        localStorage.clear();
+
+        // Clear server data
+        await saveResponseToServer([]); // This will overwrite server data with empty array
+
+        document.getElementById('yesButton').disabled = false;
+        document.getElementById('noButton').disabled = false;
+        document.getElementById('cooldownMessage').textContent = '';
+
+        alert('All data has been reset!');
+        await updateResponseList();
+    }
+}
+
+// Add periodic sync
+setInterval(updateResponseList, 30000); // Sync every 30 seconds
+
+// Check cooldown status when page loads
+window.addEventListener('load', () => {
+    checkCooldown();
+    updateResponseList();
+});
+</script>
 </body>
 </html>
