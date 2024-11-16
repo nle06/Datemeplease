@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Date Me App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --primary-color: #ff2d55;
+            --secondary-color: #ff4b6e;
+            --container-width: min(90%, 500px);
+            --spacing-unit: clamp(0.5rem, 2vw, 1rem);
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+        html, body {
+            height: 100%;
+            height: -webkit-fill-available;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: linear-gradient(135deg, #ff6b6b, #ffd1d1);
+            font-family: 'Poppins', sans-serif;
+            position: relative;
+            padding: var(--spacing-unit);
+        }
+
+        .background-patterns {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .pattern {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%);
+            filter: blur(20px);
+        }
+
+        .pattern:nth-child(1) {
+            width: min(400px, 60vw);
+            height: min(400px, 60vw);
+            top: 5%;
+            left: 15%;
+            animation: floatPattern 15s infinite ease-in-out;
+        }
+
+        .pattern:nth-child(2) {
+            width: min(300px, 50vw);
+            height: min(300px, 50vw);
+            top: 50%;
+            right: 10%;
+            animation: floatPattern 12s infinite ease-in-out reverse;
+        }
+
+        .pattern:nth-child(3) {
+            width: min(250px, 40vw);
+            height: min(250px, 40vw);
+            bottom: 15%;
+            left: 25%;
+            animation: floatPattern 18s infinite ease-in-out 1s;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: clamp(2rem, 5vw, 4rem);
+            border-radius: 30px;
+            text-align: center;
+            position: relative;
+            overflow: visible;
+            width: var(--container-width);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.1),
+                inset 0 0 80px rgba(255, 255, 255, 0.5);
+            z-index: 1;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            animation: containerAppear 1s ease-out forwards;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: clamp(1.5rem, 5vw, 2.5rem);
+            font-size: clamp(1.8rem, 6vw, 2.8rem);
+            position: relative;
+            display: inline-block;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            transform-style: preserve-3d;
+            animation: titleFloat 3s ease-in-out infinite;
+        }
+
+        h1::after {
+            content: '❤️';
+            position: absolute;
+            top: clamp(-15px, -3vw, -20px);
+            right: clamp(-25px, -5vw, -35px);
+            font-size: clamp(1.2rem, 5vw, 1.8rem);
+            animation: heartBeat 2s ease-in-out infinite;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            margin-top: 2rem;
+        }
+
+        .button {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .button:hover:before {
+            left: 100%;
+        }
+
+        #yesButton {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 75, 110, 0.3);
+            transform: translateY(0);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #yesButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 75, 110, 0.4);
+        }
+
+        #noButton {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--secondary-color);
+            border: 2px solid var(--secondary-color);
+            transform: translateY(0);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        #noButton:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        #cooldownMessage {
+            margin-top: 1.5rem;
+            color: var(--secondary-color);
+            font-size: 0.95rem;
+            font-weight: 500;
+            min-height: 1.5em;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: messageAppear 0.3s ease forwards;
+        }
+
+        .admin-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-button:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .admin-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            max-width: 90%;
+            width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .admin-panel h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .response-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .response-item:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .response-yes {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+
+        .response-no {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .close-admin {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.2s;
+        }
+
+        .close-admin:hover {
+            color: var(--primary-color);
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        .admin-actions {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        .reset-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .reset-button.reset-cooldown {
+            background: #3498db;
+            color: white;
+        }
+
+        .reset-button {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .reset-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Animations */
+        @keyframes containerAppear {
+            0% {
+                transform: translateY(20px) scale(0.95);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes titleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes floatPattern {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(30px, 30px) rotate(5deg); }
+            50% { transform: translate(0, 60px) rotate(0deg); }
+            75% { transform: translate(-30px, 30px) rotate(-5deg); }
+        }
+
+        @keyframes messageAppear {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .container {
+                padding: clamp(1.5rem, 4vw, 2.5rem);
+                width: 95%;
+            }
+
+            .button {
+                padding: 12px 30px;
+                font-size: 1.1rem;
+            }
+
+            .admin-panel {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .pattern {
+                opacity: 0.5;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            .admin-panel {
+                background: rgba(255, 255, 255, 0.98);
+            }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-patterns">
+        <div class="pattern"></div>
+        <div class="pattern"></div>
+        <div class="pattern"></div>
+    </div>
+    <div class="container">
+        <h1>Làm người iu anh nho</h1>
+        <div class="buttons-container">
+            <button class="button" id="yesButton" onclick="handleResponse('yes')">Yes</button>
+            <button class="button" id="noButton" onclick="handleResponse('no')">No</button>
+        </div>
+        <div id="cooldownMessage"></div>
+        <div class="hearts"></div>
+    </div>
+
+    <!-- Admin Panel -->
+    <button class="admin-button" onclick="toggleAdminPanel()">View Responses</button>
+    <div class="overlay" id="overlay" onclick="toggleAdminPanel()"></div>
+    <div class="admin-panel" id="adminPanel">
+        <button class="close-admin" onclick="toggleAdminPanel()">×</button>
+        <h2>Response History</h2>
+        <div id="responseList"></div>
+        <div class="admin-actions">
+            <button class="reset-button reset-cooldown" onclick="resetCooldown()">Reset Cooldown</button>
+            <button class="reset-button" onclick="resetAllData()">Reset All Data</button>
+        </div>
+    </div>
+    <script>
+        const COOLDOWN_DURATION = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+
+        function checkCooldown() {
+            const lastResponse = localStorage.getItem('lastResponse');
+            const lastResponseTime = localStorage.getItem('lastResponseTime');
+
+            if (lastResponseTime) {
+                const timeElapsed = Date.now() - parseInt(lastResponseTime);
+                if (timeElapsed < COOLDOWN_DURATION) {
+                    const hoursLeft = Math.ceil((COOLDOWN_DURATION - timeElapsed) / (1000 * 60 * 60));
+                    document.getElementById('yesButton').disabled = true;
+                    document.getElementById('noButton').disabled = true;
+                    document.getElementById('cooldownMessage').textContent =
+                        `${hoursLeft} tiếng nữa quay lại nhó chụt chụt`;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function handleResponse(response) {
+            if (checkCooldown()) return;
+
+            // Store the response with timestamp
+            const timestamp = Date.now();
+            const responses = JSON.parse(localStorage.getItem('responses') || '[]');
+            responses.push({
+                response: response,
+                timestamp: timestamp
+            });
+            localStorage.setItem('responses', JSON.stringify(responses));
+
+            // Store last response for cooldown
+            localStorage.setItem('lastResponse', response);
+            localStorage.setItem('lastResponseTime', timestamp.toString());
+
+            // Handle different responses
+            if (response === 'yes') {
+                // Create hearts animation
+                for (let i = 0; i < 15; i++) {
+                    setTimeout(() => createHeart(), i * 100);
+                }
+                alert("Yayyyy! ❤️");
+                // Redirect to success.html after a short delay
+                setTimeout(() => {
+                    window.location.href = "success.html";
+                }, 500);
+            } else {
+                alert("Phú Phú đã bùn 💔");
+            }
+
+            // Disable buttons and show cooldown message
+            document.getElementById('yesButton').disabled = true;
+            document.getElementById('noButton').disabled = true;
+            document.getElementById('cooldownMessage').textContent =
+            `Bùn rùi nên ${hoursLeft} tiếng nữa mới đc trả lời`;
+        }
+
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
+            document.querySelector('.hearts').appendChild(heart);
+
+            setTimeout(() => {
+                heart.remove();
+            }, 5000);
+        }
+
+        function toggleAdminPanel() {
+            const adminPanel = document.getElementById('adminPanel');
+            const overlay = document.getElementById('overlay');
+            const isVisible = adminPanel.style.display === 'block';
+
+            if (!isVisible) {
+                updateResponseList();
+            }
+
+            adminPanel.style.display = isVisible ? 'none' : 'block';
+            overlay.style.display = isVisible ? 'none' : 'block';
+        }
+
+        function updateResponseList() {
+            const responses = JSON.parse(localStorage.getItem('responses') || '[]');
+            const responseList = document.getElementById('responseList');
+
+            if (responses.length === 0) {
+                responseList.innerHTML = '<p>No responses yet.</p>';
+                return;
+            }
+
+            const responseHtml = responses.map(item => {
+                const date = new Date(item.timestamp);
+                const formattedDate = date.toLocaleString();
+                const responseClass = item.response === 'yes' ? 'response-yes' : 'response-no';
+
+                return `
+                    <div class="response-item">
+                        <span class="${responseClass}">${item.response.toUpperCase()}</span>
+                        <span>${formattedDate}</span>
+                    </div>
+                `;
+            }).join('');
+
+            responseList.innerHTML = responseHtml;
+        }
+
+        function resetCooldown() {
+            if (confirm('Are you sure you want to reset the cooldown? This will allow immediate new responses.')) {
+                localStorage.removeItem('lastResponse');
+                localStorage.removeItem('lastResponseTime');
+
+                // Re-enable buttons and clear cooldown message
+                document.getElementById('yesButton').disabled = false;
+                document.getElementById('noButton').disabled = false;
+                document.getElementById('cooldownMessage').textContent = '';
+
+                alert('Cooldown has been reset! You can now respond again.');
+
+                // Update the admin panel
+                updateResponseList();
+            }
+        }
+
+
+        // Check cooldown status when page loads
+        window.addEventListener('load', () => {
+            checkCooldown();
+            updateResponseList();
+        });
+    </script>
+</body>
+</html>

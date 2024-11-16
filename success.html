@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yayyy! 💖</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(45deg, #ff6b6b, #ffc3c3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+
+        .success-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-container {
+            margin: 20px auto;
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .success-image {
+            width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: block; /* Add this to show image dimensions even while loading */
+            min-height: 200px; /* Add minimum height while loading */
+            background: rgba(255, 255, 255, 0.2); /* Add subtle background while loading */
+        }
+
+        h1 {
+            color: #ff2d55;
+            margin-bottom: 1rem;
+            font-size: clamp(1.5rem, 5vw, 2rem);
+        }
+
+        .glitter {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="white"/></svg>');
+            mix-blend-mode: overlay;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .heart {
+            position: absolute;
+            pointer-events: none;
+            animation: heartFall 3s linear forwards;
+            font-size: clamp(10px, 3vw, 20px);
+        }
+
+        @keyframes heartFall {
+            0% { 
+                transform: translateY(-100%) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(100vh) rotate(720deg) scale(0);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <h1>Yayyyy! 💖</h1>
+        <div class="image-container">
+            <img 
+            src="./image.jfif"
+                alt="Success" 
+                class="success-image"
+                onerror="console.error('Image failed to load:', this.src);"
+            >
+            <div class="glitter"></div>
+        </div>
+    </div>
+    <div class="hearts"></div>
+
+    <script>
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
+            document.querySelector('.hearts').appendChild(heart);
+            
+            setTimeout(() => {
+                heart.remove();
+            }, 5000);
+        }
+
+        // Create falling hearts
+        setInterval(() => {
+            createHeart();
+        }, 300);
+
+        // Add image error debugging
+        window.addEventListener('load', function() {
+            const img = document.querySelector('.success-image');
+            console.log('Image path:', img.src);
+            console.log('Image complete:', img.complete);
+            console.log('Image naturalWidth:', img.naturalWidth);
+        });
+    </script>
+</body>
+</html>
